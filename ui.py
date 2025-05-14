@@ -1,7 +1,12 @@
 from main import get_pokemon_data, get_random_pokemon_data, print_pokemon_info
+from picachu import print_welcome_art
+
+
 
 def menu():
     while True:
+        welcome_message = print_welcome_art()
+        welcome_message
         print("\nWelcome to the Pokémon Drawer!")
         print("1. Draw a Pokémon")
         print("2. Exit")
