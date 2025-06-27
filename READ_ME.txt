@@ -34,7 +34,7 @@ USER_DATA_FILE = "userdata.sh"
 2. Run the following command:
 
    bash
-   python3 deploy.py
+   python3 deployment.py
    
 3. If everything worked, a public IP address will be printed
 4. Connect to the server:

@@ -2,6 +2,7 @@ from security_group import create_security_group
 from launch_instance import launch_instance
 import os
 
+
 from constants import SECURITY_GROUP_ID
 
 def update_constants_file(new_sg_id):

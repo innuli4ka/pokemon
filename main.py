@@ -1,31 +1,60 @@
 import requests
 import random
 from readapi import API_BASE_URL, POKEMON_LIST_URL
-from db import load_pokemon_db, save_pokemon_to_db
+from db import get_pokemon_from_db, save_pokemon_to_db, create_table_if_not_exists
+
+create_table_if_not_exists()
 
 def get_pokemon_data(name_or_id):
-    db = load_pokemon_db()
-    if str(name_or_id).lower() in db:
-        return db[str(name_or_id).lower()]
+    # Check if name_or_id is numeric (ID case)
+    if str(name_or_id).isdigit():
+        # Always fetch from API by ID
+        url = f"{API_BASE_URL}/pokemon/{name_or_id}"
+        response = requests.get(url)
 
-    url = f"{API_BASE_URL}/pokemon/{name_or_id}"
-    response = requests.get(url)
+        if response.status_code != 200:
+            print("Error: Pokémon not found.")
+            return None
 
-    if response.status_code != 200:
-        print("Error: Pokémon not found.")
-        return None
+        data = response.json()
+        pokemon_info = {
+            "id": data["id"],
+            "name": data["name"],
+            "height": data["height"],
+            "weight": data["weight"],
+            "types": [t["type"]["name"] for t in data["types"]]
+        }
 
-    data = response.json()
-    pokemon_info = {
-        "id": data["id"],
-        "name": data["name"],
-        "height": data["height"],
-        "weight": data["weight"],
-        "types": [t["type"]["name"] for t in data["types"]]
-    }
+        existing = get_pokemon_from_db(pokemon_info['name'])
+        if not existing:
+            save_pokemon_to_db(pokemon_info)
 
-    save_pokemon_to_db(pokemon_info)
-    return pokemon_info
+        return pokemon_info
+    else:
+        # Search by name → check Dynamo first
+        found = get_pokemon_from_db(name_or_id)
+        if found:
+            return found
+
+        # Not in DB → fetch from API
+        url = f"{API_BASE_URL}/pokemon/{name_or_id}"
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            print("Error: Pokémon not found.")
+            return None
+
+        data = response.json()
+        pokemon_info = {
+            "id": data["id"],
+            "name": data["name"],
+            "height": data["height"],
+            "weight": data["weight"],
+            "types": [t["type"]["name"] for t in data["types"]]
+        }
+
+        save_pokemon_to_db(pokemon_info)
+        return pokemon_info
 
 def print_pokemon_info(pokemon):
     print(f"ID: {pokemon['id']}")
@@ -43,5 +72,3 @@ def get_random_pokemon_data():
     random_name = random_pokemon["name"]
 
     return get_pokemon_data(random_name)
-
-random_pokemon = get_random_pokemon_data()

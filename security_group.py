@@ -3,7 +3,7 @@ from constants import REGION
 
 GROUP_NAME = "innas-security-group"
 DESCRIPTION = "innas security group"
-VPC_ID = "vpc-06963637bc8bb3a2b"
+VPC_ID = "vpc-02711d44fc8492985"
 
 def create_security_group():
     ec2 = boto3.client("ec2", region_name=REGION)

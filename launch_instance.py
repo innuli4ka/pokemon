@@ -10,7 +10,7 @@ def launch_instance():
     ec2 = boto3.client("ec2", region_name=REGION)
 
     try:
-        with open(USER_DATA_FILE, "r") as f:
+        with open(USER_DATA_FILE, encoding="utf-8") as f:
             user_data_script = f.read()
 
         response = ec2.run_instances(
