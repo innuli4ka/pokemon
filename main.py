@@ -1,9 +1,12 @@
 import requests
 import random
-from readapi import API_BASE_URL, POKEMON_LIST_URL
 from db import get_pokemon_from_db, save_pokemon_to_db, create_table_if_not_exists
 
+API_BASE_URL = "https://pokeapi.co/api/v2"
+POKEMON_LIST_URL = f"{API_BASE_URL}/pokemon?limit=10000&offset=0"
+
 create_table_if_not_exists()
+
 
 def get_pokemon_data(name_or_id):
     # Check if name_or_id is numeric (ID case)
