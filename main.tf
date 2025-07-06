@@ -13,24 +13,17 @@ variable "key_name" {
   default = "vockey"
 }
 
-
-# If your VPC is the default, you can skip setting it explicitly.
-# Otherwise, set your VPC ID here:
-# variable "vpc_id" {
-#   default = "vpc-xxxxxxxxxxxxxxx"
-# }
-
+# ----------------------------------------
 # Security Group — open SSH
 resource "aws_security_group" "pokemon_sg" {
   name_prefix = "pokemon-sg-"
   description = "Allow SSH"
-  # vpc_id = var.vpc_id  # Uncomment if you set VPC explicitly
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Open to all — lock down in real use
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -41,13 +34,46 @@ resource "aws_security_group" "pokemon_sg" {
   }
 }
 
+# ----------------------------------------
+# IAM Role for EC2
+
+resource "aws_iam_role" "pokemon_ec2_role" {
+  name = "pokemon-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+# Attach AmazonDynamoDBFullAccess to the role
+resource "aws_iam_role_policy_attachment" "pokemon_attach_dynamodb" {
+  role       = aws_iam_role.pokemon_ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+}
+
+# Instance profile to bind the role to EC2
+resource "aws_iam_instance_profile" "pokemon_ec2_profile" {
+  name = "pokemon-ec2-profile"
+  role = aws_iam_role.pokemon_ec2_role.name
+}
+
+# ----------------------------------------
 # EC2 Instance
 resource "aws_instance" "pokemon_instance" {
-  ami           = "ami-039f97a3f98ab3761"
-  instance_type = "t2.micro"
-  key_name      = var.key_name
-
+  ami                    = "ami-039f97a3f98ab3761"
+  instance_type          = "t2.micro"
+  key_name               = var.key_name
   vpc_security_group_ids = [aws_security_group.pokemon_sg.id]
+
+  # Attach the IAM instance profile
+  iam_instance_profile = aws_iam_instance_profile.pokemon_ec2_profile.name
 
   user_data = file("${path.module}/userdata.sh")
 
@@ -56,8 +82,8 @@ resource "aws_instance" "pokemon_instance" {
   }
 }
 
+# ----------------------------------------
 # Output the public IP
 output "instance_public_ip" {
   value = aws_instance.pokemon_instance.public_ip
 }
-
