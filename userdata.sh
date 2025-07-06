@@ -12,4 +12,5 @@ sudo -u ubuntu git clone https://github.com/innuli4ka/pokemon.git /home/ubuntu/a
 pip3 install boto3
 
 # Append auto-run line to ubuntu's .bash_profile *as ubuntu user*
-sudo -u ubuntu bash -c 'echo "python3 /home/ubuntu/app/ui.py" >> /home/ubuntu/.bash_profile'
+sudo -u ubuntu bash -c 'echo "python3 /home/ubuntu/app/ui.py" >> /home/ubuntu/.bashrc'
+
