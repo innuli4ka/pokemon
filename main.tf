@@ -1,20 +1,43 @@
-# Variables
-
-variable "region" {
-  description = "AWS region to deploy to"
-  default     = "us-west-2"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
 }
 
 provider "aws" {
-  region = var.region
+  region     = var.region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
+}
+
+variable "region" {
+  default = "us-west-2"
+}
+
+variable "ami" {
+  description = "AMI ID for Ubuntu"
+}
+
+variable "instance_type" {
+  default = "t2.micro"
 }
 
 variable "key_name" {
-  default = "vockey"
+  description = "Your EC2 key pair name"
 }
 
-# ----------------------------------------
-# Security Group — open SSH
+variable "aws_access_key" {
+  description = "AWS Access Key ID"
+}
+
+variable "aws_secret_key" {
+  description = "AWS Secret Access Key"
+}
+
+# Security Group
 resource "aws_security_group" "pokemon_sg" {
   name_prefix = "pokemon-sg-"
   description = "Allow SSH"
@@ -34,56 +57,26 @@ resource "aws_security_group" "pokemon_sg" {
   }
 }
 
-# ----------------------------------------
-# IAM Role for EC2
-
-resource "aws_iam_role" "pokemon_ec2_role" {
-  name = "pokemon-ec2-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
-
-# Attach AmazonDynamoDBFullAccess to the role
-resource "aws_iam_role_policy_attachment" "pokemon_attach_dynamodb" {
-  role       = aws_iam_role.pokemon_ec2_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
-}
-
-# Instance profile to bind the role to EC2
-resource "aws_iam_instance_profile" "pokemon_ec2_profile" {
-  name = "pokemon-ec2-profile"
-  role = aws_iam_role.pokemon_ec2_role.name
-}
-
-# ----------------------------------------
 # EC2 Instance
-resource "aws_instance" "pokemon_instance" {
-  ami                    = "ami-039f97a3f98ab3761"
-  instance_type          = "t2.micro"
+resource "aws_instance" "pokemon_game" {
+  ami                    = var.ami
+  instance_type          = var.instance_type
   key_name               = var.key_name
   vpc_security_group_ids = [aws_security_group.pokemon_sg.id]
 
-  # Attach the IAM instance profile
-  iam_instance_profile = aws_iam_instance_profile.pokemon_ec2_profile.name
-
-  user_data = file("${path.module}/userdata.sh")
+  # Uses templatefile to inject keys
+  user_data = templatefile("${path.module}/userdata.sh", {
+    aws_access_key = var.aws_access_key
+    aws_secret_key = var.aws_secret_key
+    aws_region     = var.region
+  })
 
   tags = {
-    Name = "pokemon-instance"
+    Name = "pokemon-final"
   }
 }
 
-# ----------------------------------------
-# Output the public IP
+# Output
 output "instance_public_ip" {
-  value = aws_instance.pokemon_instance.public_ip
+  value = aws_instance.pokemon_game.public_ip
 }
