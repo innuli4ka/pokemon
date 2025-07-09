@@ -14,6 +14,7 @@ cat <<EOF > /home/ubuntu/.aws/credentials
 [default]
 aws_access_key_id = ${aws_access_key}
 aws_secret_access_key = ${aws_secret_key}
+aws_session_token = ${aws_session_token}
 region = ${aws_region}
 EOF
 
