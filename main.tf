@@ -42,9 +42,6 @@ variable "aws_secret_key" {
   description = "AWS Secret Access Key"
 }
 
-variable "aws_session_token" {
-  description = "Session token for temporary credentials"
-}
 
 # Security Group
 resource "aws_security_group" "pokemon_sg" {
