@@ -42,6 +42,10 @@ variable "aws_secret_key" {
   description = "AWS Secret Access Key"
 }
 
+variable "aws_session_token" {
+  description = "Session token for temporary credentials"
+}
+
 # Security Group
 resource "aws_security_group" "pokemon_sg" {
   name_prefix = "pokemon-sg-"
@@ -70,11 +74,12 @@ resource "aws_instance" "pokemon_game" {
   vpc_security_group_ids = [aws_security_group.pokemon_sg.id]
 
   # Uses templatefile to inject keys
-  user_data = templatefile("${path.module}/userdata.sh", {
-    aws_access_key = var.aws_access_key
-    aws_secret_key = var.aws_secret_key
-    aws_region     = var.region
-  })
+user_data = templatefile("${path.module}/userdata.sh", {
+  aws_access_key     = var.aws_access_key
+  aws_secret_key     = var.aws_secret_key
+  aws_session_token  = var.aws_session_token
+  aws_region         = var.region
+})
 
   tags = {
     Name = "pokemon-final"
